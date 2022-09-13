@@ -1,0 +1,79 @@
+use strict; use warnings;
+use File::Spec;
+use Cwd;
+die "perl $0 old-gnms-file new-gtdb-folder\n" unless @ARGV == 2;
+my ($gnmsfile, $gtdbfolder) = @ARGV;
+my $oldpath = File::Spec->rel2abs($gnmsfile); $oldpath =~ s/[^\/]+$//; 
+my $bin = File::Spec->rel2abs($0); $bin =~ s/[^\/]+$//;
+my $curdir = getcwd(); $curdir =~ /([^\/]+)$/; my $folder = $1;
+my @files = ("neededgnms.txt", $gnmsfile);
+my (%gnms, %dir, %failed);
+
+for my $file (@files) {
+ for (@{ReadFile($file)}) {
+  my @temp = split "\t"; my $gca = $temp[0];
+  warn "$gca\n";
+  next unless $gca =~ /(\d{3})(\d{3})(\d{3})/;
+  $dir{$gca} = ($temp[2]) ? $oldpath . $temp[2] : File::Spec->rel2abs("gca/$1/$2/$3");
+  chdir ".."; $dir{$gca} = File::Spec->abs2rel($dir{$gca}); chdir "$folder"; $dir{$gca} = "../" . $dir{$gca};
+  my $source = ($temp[3]) ? $temp[3] : "gtdb207";
+  next if $gnms{$gca};
+  my ($sp, $gencode, $tax);
+  for (`grep "$gca" $gtdbfolder/sp_clusters_*`) {
+   my @f = split "\t";
+   $sp = $f[1]; $sp =~ s/s__(\S+) (\S+)/${1}__$2/;
+   $tax = $f[2];
+   for (`grep "$gca" $gtdbfolder/*_metadata_*`) {
+    my @l = split "\t"; $gencode = $l[82]; last;
+   }
+  }
+  #for (`grep "$gca" $gtdbfolder/qc_failed_*`) {
+  # my @f = split "\t";
+  # $sp = $f[1]; $sp =~ s/s__(\S+) (\S+)/${1}__$2/; $sp = "ND:" . $sp;
+  # $tax = "no"; $gencode = ' ';
+  #}
+  unless ($sp) { $failed{$gca} = 1; warn "Retry required for $gca\n"; next; }
+  die "No gencode\n" unless $gencode;
+  my $line = join ("\t", $gca, $sp, $dir{$gca}, $source, $tax, $gencode);
+  $gnms{$gca} = $line;
+ }
+}
+
+if (keys %failed) {
+ open REF, ">reflist.txt";
+ my $cmd = "mash paste reps.msh";
+ for (`grep -v Rep $gtdbfolder/sp_clusters_*.tsv | cut -f 1,2,4`) {
+  /GC[AF]_(\d+).*s__(\S+ \S+)/;
+  my ($path, $id, $circum) = ($dir{$1}, $2, $4);
+  print REF "$1\t$id\t$circum\n";
+  $cmd .= " $path/genome.fa.msh";
+ }
+ close REF;
+ `$cmd`;
+ mkdir "failed";
+ for (sort keys %failed) {
+  my $gca = $_;
+  warn "Retrying $gca\n";
+  `perl $bin/speciate3.pl $dir{$gca}/genome.fa failed/$gca`;
+  my ($source, $tax, $gencode, $sp) = ('no', '', '');
+  for (`cut -f 2,3 failed/$gca/species`) {
+   my $extra;
+   ($sp, $extra) = split "\t";
+   if ($extra eq "ND") { $sp = "ND:$sp"; }
+  }
+  die "Retry failed for $gca\n" unless $sp;
+  my $line = join ("\t", $gca, $sp, $dir{$gca}, $source, $tax, $gencode);
+  $gnms{$gca} = $line;
+ }
+}
+
+open OUT, ">gnms.txt"; for (sort values %gnms) { print OUT "$_\n"; } close OUT;
+
+sub ReadFile {
+ my @ret;
+ print "Reading file $_[0]\n";
+ open IN, $_[0] or die "Can't open $_[0]\n";
+ while (<IN>) {last if /^##FASTA/; next if /^#/; push @ret, $_}
+ close IN; chomp @ret; return \@ret;
+}
+

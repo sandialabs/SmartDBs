@@ -1,0 +1,12 @@
+my $softdir = $0;
+if ($softdir =~ /\//) {$softdir =~ s/[^\/]+$//} else {$softdir = '.'}
+for (`cat neededgnms.txt`) {
+ next unless /^(\d{3})(\d{3})(\d{3})$/;
+ my $dir = "gca/$1/$2/$3";
+ print "mkdir 'gca/$1'; mkdir 'gca/$1/$2'; mkdir $dir; " .
+  "rsync --copy-links --recursive --times --verbose rsync://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/" .
+  "$1/$2/$3/*/*[0-9]_genomic.fna.gz $dir; perl $softdir" . "newversion.pl $dir; " .
+  "mv $dir/*[0-9]_genomic.fna.gz $dir/genome.fa.gz; gunzip $dir/genome.fa.gz\n" unless (-e "$dir/genome.fa");
+}
+# FAILURE EXAMPLE: 
+# /genomes/all/GCA/907/163/105/GCA_907163105.1_CB-03_assembly/GCA_907163105.1_CB-03_assembly_genomic.fna.gz
