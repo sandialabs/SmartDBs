@@ -8,9 +8,9 @@ my $cores = $config{CORES};
 
 my $logic = ($config{QUICK_SETUP} eq "none") ? 1 : 0;
 
-if ($config{OLDGNMS} eq "none") {
+if ($config{OLDGNMSTXT} eq "none") {
  system("touch blank");
- $config{OLDGNMS} = "blank";
+ $config{OLDGNMSTXT} = "blank";
 }
 
 unless ($config{GTDB} eq "none") {
@@ -39,7 +39,7 @@ if ($logic) {
 sub FullUpdate {
  print STDERR "Running toget\n";
  unless (-e "neededgnms.txt") {
-  die if system("perl $softdir/toget.pl $config{OLDGNMS} $config{GTDB}");
+  die if system("perl $softdir/toget.pl $config{OLDGNMSTXT} $config{GTDB}");
  }
  my $count = -1;
  my $prevcount = -2;
@@ -72,9 +72,9 @@ sub FullUpdate {
  print STDERR "Running writemash\n";
  #die if system("perl $softdir/writemash.pl $config{GENOMES} $cores");
  print STDERR "Running newgnms\n";
- die if system("perl $softdir/newgnms.pl $config{OLDGNMS} $config{GTDB} $config{GENOMES} $cores");
+ die if system("perl $softdir/newgnms.pl $config{OLDGNMSTXT} $config{GTDB} $config{GENOMES} $cores");
  print STDERR "Running finishgca\n";
- #die if system("perl $softdir/finishgca.pl $config{GENOMES} $config{OLDGNMS} $cores");
+ #die if system("perl $softdir/finishgca.pl $config{GENOMES} $config{OLDGNMSTXT} $cores");
  print STDERR "Running mashlists\n";
  #die if system("perl $softdir/mashlists.pl $config{GTDB} $cores");
  print STDERR "Running mashpaste\n";
@@ -134,6 +134,6 @@ sub ReadConfig {
   chomp; next unless /^([^=]+)=(\S+)/;
   $config{$1} = $2;
  }
- for (qw/GENOMES SOFTWARE DBS GTDB OLDGNMS CORES QUICK_SETUP/) {die "Config file missing $_\n" unless $config{$_}}
+ for (qw/GENOMES SOFTWARE DBS GTDB OLDGNMSTXT CORES QUICK_SETUP/) {die "Config file missing $_\n" unless $config{$_}}
 }
 
