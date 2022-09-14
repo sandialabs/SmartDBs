@@ -10,7 +10,7 @@ my @files = ("newgnms.txt", $gnmsfile);
 my $pm = Parallel::ForkManager->new($forks);
 my %gnms;
 
-open RAW, ">RAWgnms.txt";
+#open RAW, ">RAWgnms.txt";
 open OUT, ">gnms.txt";
 $pm->run_on_finish( sub {
  my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data) = @_;
@@ -18,10 +18,10 @@ $pm->run_on_finish( sub {
  $gnms{$ident} = 1;
  if ($exit_code) {
   warn "$ident failed! Not in sp_cluster file.\n";
-  print RAW "$data->{line}\n";
+  #print RAW "$data->{line}\n";
  } else {
   print OUT "$data->{line}\n";
-  print RAW "$data->{line}\n";
+  #print RAW "$data->{line}\n";
  }
 });
 
