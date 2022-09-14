@@ -6,7 +6,7 @@ TIGER is a comparative genomics program for finding mobile genetic elements in a
 ## Citation
 Shormin F, Ghaffari N, Yu SL, Mageeney CM, Williams KP. 2022. Speeding genomic island discovery through systematic design of reference database composition, in preparation.
 
-## INSTALLATION
+## Installation
 ```
 git clone https://github.com/sandialabs/SmartDBs.git
 ```
@@ -37,7 +37,7 @@ Please also have these packages installed as well:
  * Perl Core: List::Util, File::Spec, Cwd, Getopt::Long
  * Perl Noncore: Parallel::ForkManager
 
-## SUGGESTED SETUP
+## Suggested Set Up
 
 ```
 smartdbs
@@ -53,7 +53,7 @@ smartdbs
 |__update207 (user-setup for new update)
 ```
 
-## RUNNING
+## Running
 
 ### Config files
 In order to run either mode of the program, a config file must be created in the same directory you are running the code. The format of the configuration file is 7 lines of separated KEY=VALUE pairs. The required keys are:
