@@ -25,7 +25,7 @@ Download the following files from the latest gtdb release (in this example, rele
   4. bac120.sp_labels.tree
   5. sp_clusters_r207.tsv
 
-Untar the *metadata*.tar.gz files. You can then delete the zipped versions or the program will do it for you (the .tar.gz file would interfere).
+Untar the metadata files. The program will automatically delete the .tar.gz as these files would interfere with how the program runs.
 
 ### Mash
 This program requires the installation of MASH v2.0 or greater. Mash can be downloaded from: https://github.com/marbl/Mash/releases.
