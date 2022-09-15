@@ -1,4 +1,4 @@
-# SmartDBs (temporary name)
+# SmartDBs
 
 ## About
 TIGER is a comparative genomics program for finding mobile genetic elements in a query genome. It requires a reference genome database appropriate for the query genome. The smartDBs facilitated here are tailored for each species, yet redundant such that 3680 DBs cover all 65703 species of GTDB release 207. This pipeline has two modes, either a full update mode that freshly designs and prepares all DBs needed to cover all species in any new GTDB release, or a quick setup mode where the user chooses a subset of DBs to prepare from a precalculated DB design file. It collects required fasta files from NCBI and produces the chosen smart databases. These databases are smaller than those we used before, greatly speeding TIGER.
@@ -99,7 +99,7 @@ QUICK_SETUP=none
 ```
 
 ### Quick Setup
-This mode requires download of the smartsUniq500 file and the gnms.txt file from our github repository. (The gnms.txt file can be omitted, but then the GTDB data will be required.) The QUICK_SETUP config file value can be "all" (to make the full set of DBs) or a comma-separated list of only the desired SmartDBs. This mode will only download the assemblies used in the precalculated databases, and skip any calculations. Note: Over the course of this program, gnms.txt will be changed to only include the files that were downloaded and reflect the user's file system.
+This mode requires download of the smartsUniq500 file, reflist.txt file, and the gnms.txt file from our github repository in the folder files. (The gnms.txt file and reflist.txt file can be omitted, but then the GTDB data will be required.) The QUICK_SETUP config file value can be "all" (to make the full set of DBs) or a comma-separated list of only the desired SmartDBs. This mode will only download the assemblies used in the precalculated databases, and skip any calculations. Note: Over the course of this program, gnms.txt and reflist.txt will be changed to only include the files that were downloaded and reflect the user's file system.
 
 #### Quick Setup of full DB set
 ```

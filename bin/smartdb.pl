@@ -8,9 +8,9 @@ my $cores = $config{CORES};
 
 my $logic = ($config{QUICK_SETUP} eq "none") ? 1 : 0;
 
-if ($config{OLDGNMSTXT} eq "none") {
+if ($config{OLDGNMS} eq "none") {
  system("touch blank");
- $config{OLDGNMSTXT} = "blank";
+ $config{OLDGNMS} = "blank";
 }
 
 unless ($config{GTDB} eq "none") {
@@ -34,63 +34,63 @@ if ($logic) {
  QuickSetUp();
 }
 
-
+system("rm blank") if (-e "blank");
+system("mkdir log; mv *log log/;");
+system("mv newgnms.txt neededgnms.txt");
 
 sub FullUpdate {
  print STDERR "Running toget\n";
  unless (-e "neededgnms.txt") {
-  die if system("perl $softdir/toget.pl $config{OLDGNMSTXT} $config{GTDB}");
+  die if system("perl $softdir/toget.pl $config{OLDGNMS} $config{GTDB}");
  }
  my $count = -1;
  my $prevcount = -2;
  unless (-e "rsynclog") { 
   while ($count != 0 and $count != $prevcount) {
    print STDERR "Running jobsrsync\n";
-   #die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores");
+   die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores &> rsync.log");
    $prevcount = $count;
    $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
    print "$count\n";
   }
   if ($count > 0) {
    print "Some GCAs must be manaully downloaded:\n";
-    system("cat rsynclog");
+   system("cat rsynclog");
    print "This list can be found in the file rsynclog. You can find some of these GCAs on the main NCBI website. Rerun the program to continue. Note: When the program continues, it will do so without using any of the missing GCAs and these can not be added later.\n"; 
    exit;
   }
  } else {
   print STDERR "Running jobsrsync\n";
-  #die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores");
+  die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores &> rsync.log");
   $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
  }
- if ($count) {
-  open OUT, ">newgnms.txt";
-  my (%missing);
-  for (`cat rsynclog`) { chomp; $missing{$_} = 1; system("rm -rf $config{GENOMES}/$1/$2/$3") if /(\d{3})(\d{3})(\d{3})/; }
-  for (`cat neededgnms.txt`) { chomp; print OUT "$_\n" unless $missing{$_}; }
-  close OUT;
- }
+ open OUT, ">newgnms.txt";
+ my (%missing);
+ for (`cat rsynclog`) { chomp; $missing{$_} = 1; system("rm -rf $config{GENOMES}/$1/$2/$3") if /(\d{3})(\d{3})(\d{3})/; }
+ for (`cat neededgnms.txt`) { chomp; print OUT "$_\n" unless $missing{$_}; }
+ close OUT;
  print STDERR "Running writemash\n";
- #die if system("perl $softdir/writemash.pl $config{GENOMES} $cores");
+ die if system("perl $softdir/writemash.pl $config{GENOMES} $cores");
  print STDERR "Running newgnms\n";
- die if system("perl $softdir/newgnms.pl $config{OLDGNMSTXT} $config{GTDB} $config{GENOMES} $cores");
+ die if system("perl $softdir/newgnms.pl $config{OLDGNMS} $config{GTDB} $config{GENOMES} $cores");
  print STDERR "Running finishgca\n";
- #die if system("perl $softdir/finishgca.pl $config{GENOMES} $config{OLDGNMSTXT} $cores");
+ die if system("perl $softdir/finishgca.pl $config{GENOMES} $config{OLDGNMS} $cores");
  print STDERR "Running mashlists\n";
- #die if system("perl $softdir/mashlists.pl $config{GTDB} $cores");
+ die if system("perl $softdir/mashlists.pl $config{GTDB} $cores");
  print STDERR "Running mashpaste\n";
- #die if system("perl $softdir/mashpaste.pl $config{GTDB} $softdir $cores &> mash.log");
+ die if system("perl $softdir/mashpaste.pl $config{GTDB} $softdir $cores &> mash.log");
  print STDERR "Running treeparse\n";
- #die if system("perl $softdir/treeparse.pl $config{GTDB}");
+ die if system("perl $softdir/treeparse.pl $config{GTDB}");
  print STDERR "Running catorders\n";
- #die if system("perl $softdir/catorders.pl $cores");
+ die if system("perl $softdir/catorders.pl $cores");
  print STDERR "Running smartdblist\n";
- #die if system("perl $softdir/smartdblist.pl $config{GTDB} $cores &> dblist.log");
+ die if system("perl $softdir/smartdblist.pl $config{GTDB} $cores &> dblist.log");
  #print STDERR "Running resmart\n";
  #die if system("perl $softdir/resmart.pl $cores");
  print STDERR "Running makedbs\n";
- #die if system("perl $softdir/makedbs.pl $config{DBS} $config{GENOMES} $config{QUICK_SETUP} $cores &> makedbs.log");
+ die if system("perl $softdir/makedbs.pl $config{DBS} $config{GENOMES} $config{QUICK_SETUP} $cores &> makedbs.log");
  print STDERR "Running species\n";
- die if system("perl $softdir/species.pl $config{GTDB}");
+ die if system("perl $softdir/species.pl $config{GENOMES} $config{GTDB} $config{QUICK_SETUP}");
 }
 
 sub QuickSetUp {
@@ -126,6 +126,8 @@ sub QuickSetUp {
  }
  print STDERR "Running makedbs\n";
  die if system("perl $softdir/makedbs.pl $config{DBS} $config{GENOMES} $config{QUICK_SETUP} $cores &> makedbs.log");
+ print STDERR "Running species\n";
+ die if system("perl $softdir/species.pl $config{GENOMES} $config{GTDB} $config{QUICK_SETUP}");
 }
 
 sub ReadConfig {
@@ -134,6 +136,6 @@ sub ReadConfig {
   chomp; next unless /^([^=]+)=(\S+)/;
   $config{$1} = $2;
  }
- for (qw/GENOMES SOFTWARE DBS GTDB OLDGNMSTXT CORES QUICK_SETUP/) {die "Config file missing $_\n" unless $config{$_}}
+ for (qw/GENOMES SOFTWARE DBS GTDB OLDGNMS CORES QUICK_SETUP/) {die "Config file missing $_\n" unless $config{$_}}
 }
 

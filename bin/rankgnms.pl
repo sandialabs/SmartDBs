@@ -3,31 +3,36 @@ use strict; use warnings;
 
 my ($target, $worst) = (500, 0.1);  # Desired database size, Fraction reserved for same genus other species
 die "Usage: perl $0 gtdbClass gtdbFamily gtdbSpecies new-gtdb-folder\n" unless @ARGV == 4;
-my (%avail, %gnms, @order, %dists, %outs);
+my (%avail, %gnms, @order, %dists, %outs, $rep);
 my ($c, $o, $sp, $gtdb) = @ARGV;
 warn "Ranking $sp\n";
+$sp =~ /(\S+)__(\S+)/; my $gtdbsp = "s__$1 $2";
 Getmeta();
-#for (`cat gnms.txt`) {my @f = split "\t"; next if $f[1] ne $sp or not $gnms{$f[0]}; $avail{$f[0]} = $f[2]}
+for (`grep -w '$gtdbsp' $gtdb/sp_cluster* | cut -f 1`) {
+ next unless /^\S+_(\d{9})\.\d+/;
+ $rep = $1;
+}
+die "Couldn't find representative for $sp\n" unless $rep;
+$gnms{$rep}[2] = 1;
 for (`cat gnms.txt`) {my @f = split "\t"; next unless $gnms{$f[0]}; $avail{$f[0]} = $f[2]}
 my $count = scalar keys %avail;
 my $keep = int((1-$worst) * $count);
-#for (keys %avail) {warn "$_ "} for (keys %gnms) {warn "$_ "}
-#die scalar (keys %gnms), " gnms; $count avail, keep $keep\n";
-#if ($count < $target) {for (keys %gnms) {warn "$_\n" unless $avail{$_}}}
-my @good = sort {$gnms{$b}[0] <=> $gnms{$a}[0] || $gnms{$a}[1] <=> $gnms{$b}[1]} keys %avail;  # MIMAG then scaffs
+my @good = sort {$gnms{$b}[2] <=> $gnms{$a}[2] ||
+                 $gnms{$b}[0] <=> $gnms{$a}[0] ||
+                 $gnms{$a}[1] <=> $gnms{$b}[1] 
+ } keys %avail;  # Representative first, then sort by MIMAG then scaffs
 my @bad = splice @good, $keep, $count-$keep;
-#for (`cat dists/$sp 001363095.sal 001362415.sal`) {chomp; my @f = split "\t"; $dists{$f[0]}{$f[1]} = $f[2]; $dists{$f[1]}{$f[0]} = $f[2]}
 for (`cat dists/$c/$o/$sp.mx`) {
  chomp; my @f = split "\t";
  my $t = shift @f;
  for my $i (@order) { my $val = shift @f; $dists{$t}{$i} = $val; $dists{$i}{$t} = $val; }
  push @order, $t;
- #print STDERR "$t\n";
 }
 my %sumdists;
 my $last = $good[0];
 for (@good) {print STDERR "$_\n"; $sumdists{$_} = 0}
-open OUT, ">orders/$c/$o/$sp";
+#open OUT, ">orders/$c/$o/$sp";
+open OUT, ">$sp";
 while (keys %sumdists) {
  #next unless defined $sumdists{$_};
  $outs{$last} ++;
@@ -41,8 +46,7 @@ close OUT;
 
 sub Getmeta {
  my %cats = qw/accession 1 gtdb_taxonomy 1 mimag_high_quality 1 mimag_medium_quality 1 scaffold_count 1/;
- $sp =~ /(.*)__(.*)/;
- my $name = ";s__$1 $2";
+ my $name = ";$gtdbsp";
  for my $file (glob "$gtdb/*_metadata_*") {
   #warn "Using $file for $name\n";
   my ($ct, %key) = (0);
@@ -57,7 +61,7 @@ sub Getmeta {
    if ($f[$key{mimag_medium_quality}] eq 't'){$mimag = 1}
    elsif ($f[$key{mimag_high_quality}] eq 't'){$mimag = 2}
    die unless $f[$key{accession}] =~ s/.*_(\d{9})\..*/$1/;
-   @{$gnms{$f[$key{accession}]}} = ($mimag, $f[$key{scaffold_count}]);
+   @{$gnms{$f[$key{accession}]}} = ($mimag, $f[$key{scaffold_count}], 0);
   }
  }
 }
