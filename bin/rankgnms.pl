@@ -1,9 +1,9 @@
 use strict; use warnings;
 # reserve 10% of worst quality, then go by diversity
 
-my ($target, $worst) = (500, 0.1);  # Desired database size, Fraction reserved for same genus other species
+my ($worst) = (0.1);  # Fraction reserved for same genus other species
 die "Usage: perl $0 gtdbClass gtdbFamily gtdbSpecies new-gtdb-folder\n" unless @ARGV == 4;
-my (%avail, %gnms, @order, %dists, %outs, $rep);
+my (%avail, %gnms, @order, %dists, $rep);
 my ($c, $o, $sp, $gtdb) = @ARGV;
 warn "Ranking $sp\n";
 $sp =~ /(\S+)__(\S+)/; my $gtdbsp = "s__$1 $2";
@@ -31,11 +31,10 @@ for (`cat dists/$c/$o/$sp.mx`) {
 my %sumdists;
 my $last = $good[0];
 for (@good) {print STDERR "$_\n"; $sumdists{$_} = 0}
-#open OUT, ">orders/$c/$o/$sp";
-open OUT, ">$sp";
+open OUT, ">orders/$c/$o/$sp";
+#open OUT, ">$sp";
 while (keys %sumdists) {
  #next unless defined $sumdists{$_};
- $outs{$last} ++;
  print OUT "$last\n";
  delete $sumdists{$last};
  for my $cand (keys %sumdists) {die "Missing dist for $c/$o/$sp: $last to $cand\n" unless defined $dists{$last}{$cand}; $sumdists{$cand} += $dists{$last}{$cand}}

@@ -71,7 +71,7 @@ QUICK_SETUP='none', 'all', or specific desired DBs (see description of Quick Set
 None of the values for each pair can be left blank.
 
 ### Manual Downloads
-In some cases, the record of the GCA may be suppressed or otherwise not available from the FTP server. If so, our software pauses to allow manual download of such files from the NCBI website: look at the legacy page, access the GenBank page and download the data as a fasta file. For the gtdb207 update, this only had to be done for GCA_905332505: Fenollaria sporofastidiosus EMRHCC_24, found at: https://www.ncbi.nlm.nih.gov/nuccore/HG994861.1?report=fasta. 
+In some cases, the record of the GCA may be suppressed or otherwise not available from the FTP server. If so, our software stops to allow manual download of such files from the NCBI website: look at the legacy page, access the GenBank page and download the data as a fasta file. For the gtdb207 update, this only had to be done for GCA_905332505: Fenollaria sporofastidiosus EMRHCC_24, found at: https://www.ncbi.nlm.nih.gov/nuccore/HG994861.1?report=fasta. Rerunning hte program will automatically skip to this step and check which files were downloaded. If any were not, it will remove the GCA from the list and proceed without it.
 
 ### Full Update
 This mode requires download of 5 GTDB files (see above) and setting the QUICK_SETUP config key to "none". This version of the program will download all necessary assemblies from the NCBI server and designing and preparing the SmarrtDBs from scratch. Here are some sample config files.
@@ -131,4 +131,6 @@ rsync: failed to connect to ftp.ncbi.nlm.nih.gov (130.14.250.11): Connection tim
 rsync: failed to connect to ftp.ncbi.nlm.nih.gov (2607:f220:41e:250::11): Network is unreachable (101)
 rsync: failed to connect to ftp.ncbi.nlm.nih.gov (2607:f220:41f:250::230): Network is unreachable (101)
 rsync error: error in socket IO (code 10) at clientserver.c(125) [Receiver=3.1.2]
-``` 
+```
+### Lost GCAs in Ful Update Mode
+When running full update mode from a previous version, there are cases where a GCA is present in the previous version, but no longer the newest update. The program will not add such cases to teh new gnms.txt, but will noted in notinnewrelease.txt. 

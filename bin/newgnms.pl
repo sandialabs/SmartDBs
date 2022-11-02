@@ -12,12 +12,13 @@ my %gnms;
 
 #open RAW, ">RAWgnms.txt";
 open OUT, ">gnms.txt";
+open MISS, ">notinnewrelase.txt";
 $pm->run_on_finish( sub {
  my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data) = @_;
  $ident =~ s/none//;
  $gnms{$ident} = 1;
  if ($exit_code) {
-  warn "$ident failed! Not in sp_cluster file.\n";
+  print MISS "$ident failed! Not in sp_cluster file.\n";
   #print RAW "$data->{line}\n";
  } else {
   print OUT "$data->{line}\n";
@@ -54,4 +55,4 @@ for my $file (@files) {
 }
 
 $pm->wait_all_children;
-close OUT; close RAW;
+close OUT; close MISS;

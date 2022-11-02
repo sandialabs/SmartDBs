@@ -9,7 +9,7 @@ for (`cut -f 2,3 $gtdbfolder/sp_clusters*.tsv`) {
  next unless /^s__(\S+) (\S+).*(${toprank}__[^;\s]+)/; $tops{"${1}__$2"} = $3; $singletops{$3} ++
 }
 for (`cat nodedists`) {chomp; my @f = split "\t"; $nodedists{$f[0]} = $f[1]; $topnodes{$2} = $1 if /^(\S+)\t.*(${toprank}__[^;\s]+)/;}
-open OUT, ">smartsUniq$max.test";
+open OUT, ">smartsUniq$max";
 for my $spnodes (`cat nodelists`) {
  chomp $spnodes; $spnodes =~ s/^(\S+)//; my $sp = $1;
  warn "$sp\n";
