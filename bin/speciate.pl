@@ -5,16 +5,16 @@ use strict; use warnings;
 # new: retry mash at d=.29 if d=.1 fails; some genomes (001255495) get mash >0.1 but ani >95% !
 
 
-die "Usage: perl $0 gnmfile outfolder [genomeid]\n" unless @ARGV > 1;
+die "Usage: perl $0 gnmfile outfolder gca-repository [genomeid]\n" unless @ARGV > 2;
 use File::Spec;
 use Cwd;
 my $projdir = getcwd();
 my $gfile = File::Spec->rel2abs($ARGV[0]);
 mkdir $ARGV[1]; chdir $ARGV[1];
-
+my $repo = $ARGV[2];
 $gfile =~ /([^\/]+)$/;
 my $base = $1;
-my $genomeid = $base; $genomeid = $ARGV[2] if $ARGV[2];
+my $genomeid = $base; $genomeid = $ARGV[3] if $ARGV[3];
 #mkdir "$outdir/$base";
 #chdir "$projdir/species/$base";
 
@@ -37,7 +37,7 @@ for (`cat mash`) {
  }
  $cands{$f[0]} = $sp;
  @{$ani{$sp}}{qw/mash hashct entry in/} = (sprintf("%.5f", 100 * (1-$f[2])), $hashct, '', 0);
- print OUT "$projdir/$1/$2/$3/genome.fa\n";
+ print OUT "$repo/$1/$2/$3/genome.fa\n";
 }
 close OUT;
 `fastANI -q $gfile --rl cands -o q.reps &> /dev/null` unless -f 'q.reps';
