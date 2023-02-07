@@ -2,13 +2,13 @@ use strict; use warnings;
 use Parallel::ForkManager;
 use File::Spec;
 
-my ($dbsdir, $repo, $dblist, $fork) = @ARGV;
+my ($dbsdir, $repo, $dblist, $max, $fork) = @ARGV;
 warn "$dbsdir, $repo, $dblist, $fork\n";
 my $pm = Parallel::ForkManager->new($fork);
 my (%dirs, %tax, %compos, %dbs);
 my %dbsused;
 if ($dblist eq "all" or $dblist eq "none") {
- for (`cut -f 1 smartsUniq500`) {
+ for (`cut -f 1 smartsUniq$max`) {
   chomp; $dbsused{$_} = 1;
  }
 } else {
@@ -16,7 +16,7 @@ if ($dblist eq "all" or $dblist eq "none") {
   $dbsused{$_} = 1;
  }
 }
-for (`cat smartsUniq500`) {
+for (`cat smartsUniq$max`) {
  chomp; my ($db, $tot, $list, $spp) = split "\t";
  for (split ',', $list) {$compos{$_} = $db; $dbs{$db}{$_} ++}
 }

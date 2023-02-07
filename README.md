@@ -56,19 +56,23 @@ smartdbs
 ## Running
 
 ### Config files
-In order to run either mode of the program, a config file must be created in the same directory you are running the code. The format of the configuration file is 7 lines of separated KEY=VALUE pairs. The required keys are:
+In order to run either mode of the program, a config file must be created in the same directory you are running the code. The format of the configuration file is line-separated KEY=VALUE pairs. All keys must have values unless a default is given. The required keys are:
 
 ```
-GENOMES=path to where the genome assemblies are to be stored
-GTDB=path to folder with gtdb data OR 'none'
-SOFTWARE=path to where the software is installed
-DBS=path to where the SmartDBs will be stored
-OLDGNMSTXT=path to an old gnms.txt file OR 'none'
-CORES=Maximum number of cores allowed
-QUICK_SETUP='none', 'all', or specific desired DBs (see description of Quick Setup mode below)
+GENOME_DIR=Path to where the genome assemblies are to be stored
+GTDB_DIR=Path to folder with gtdb data OR 'none'
+SOFTWARE_DIR=Path to where the software is installed
+DB_DIR=Path to where the SmartDBs will be stored
+DB_SIZE=Size of the database; default 500
+PREV_GNMS=Path to an old gnms.txt file; default 'none'
+CORES=Maximum number of cores allowed; default 1
+QUICK_SETUP=Determine if in Quick Setup mode; 'no' or 'yes'; default 'no' 
+SPECIES=Determine which species to include in Quick Setup Mode; 'all' or specific; default 'all'
+    *See Quick Setup below
+BUILD=Determine whether or not to build DBs; 'yes' or 'no'; default no
+OFFSPECIES=Percent of DB reserved for genome outside the species; default 0
+TOP_ORDER=Top rank the DB searches for closely related genomes; 'o', 'c', 'f', or 'g'; default 'o'
 ```
-
-None of the values for each pair can be left blank.
 
 ### Manual Downloads
 In some cases, the record of the GCA may be suppressed or otherwise not available from the FTP server. If so, our software stops to allow manual download of such files from the NCBI website: look at the legacy page, access the GenBank page and download the data as a fasta file. For the gtdb207 update, this only had to be done for GCA_905332505: Fenollaria sporofastidiosus EMRHCC_24, found at: https://www.ncbi.nlm.nih.gov/nuccore/HG994861.1?report=fasta. Rerunning hte program will automatically skip to this step and check which files were downloaded. If any were not, it will remove the GCA from the list and proceed without it.
@@ -78,49 +82,68 @@ This mode requires download of 5 GTDB files (see above) and setting the QUICK_SE
 
 #### Full Update, First Time Use
 ```
-GENOMES=../gb
-GTDB=../gtdb/207
-SOFTWARE=../bin
-OLDGNMSTXT=none
-DBS=dbs207
+GENOME_DIR=../gb
+SOFTWARE_DIR=../bin
+DB_DIR=../dbs/202o300
+GTDB_DIR=../gtdb
+DB_SIZE=300
+PREV_GNMS=none
 CORES=128
-QUICK_SETUP=none
+QUICK_SETUP=no
+SPECIES=all
+BUILD=yes
+OFFSPECIES=0
+TOP_ORDER=o
 ```
 
 #### Full Update, after a previous run for an earlier GTDB release (note OLDGNMSTXT)
 ```
-GENOMES=../gb
-GTDB=../gtdb/207
-SOFTWARE=../bin
-OLDGNMSTXT=../update202/gnms.txt
-DBS=dbs207
+GENOME_DIR=../gb
+SOFTWARE_DIR=../bin
+DB_DIR=../dbs/202o300
+GTDB_DIR=../gtdb
+DB_SIZE=300
+PREV_GNMS=../update202/gnms.txt
 CORES=128
-QUICK_SETUP=none
+QUICK_SETUP=no
+SPECIES=all
+BUILD=yes
+OFFSPECIES=0
+TOP_ORDER=o
 ```
 
 ### Quick Setup
-This mode requires download of the smartsUniq500 file, reflist.txt file, and the gnms.txt file from our github repository in the folder files. (The gnms.txt file and reflist.txt file can be omitted, but then the GTDB data will be required.) The QUICK_SETUP config file value can be "all" (to make the full set of DBs) or a comma-separated list of only the desired SmartDBs. This mode will only download the assemblies used in the precalculated databases, and skip any calculations. Note: Over the course of this program, gnms.txt and reflist.txt will be changed to only include the files that were downloaded and reflect the user's file system.
+This mode requires download of the corresponding smartsUniq file, reflist.txt file, and the gnms.txt file from our github repository in the folder files. (The gnms.txt file and reflist.txt file can be omitted, but then the GTDB data will be required.) The QUICK_SETUP config file value can be "all" (to make the full set of DBs) or a comma-separated list of only the desired SmartDBs. This mode will only download the assemblies used in the precalculated databases, and skip any calculations. Note: Over the course of this program, gnms.txt and reflist.txt will be changed to only include the files that were downloaded and reflect the user's file system.
 
 #### Quick Setup of full DB set
 ```
-GENOMES=../gb
-GTDB=none
-SOFTWARE=../bin
-OLDGNMSTXT=none
-DBS=dbs207
+GENOME_DIR=../gb
+SOFTWARE_DIR=../bin
+DB_DIR=../dbs/202o500
+GTDB_DIR=none
+DB_SIZE=500
+PREV_GNMS=none
 CORES=128
-QUICK_SETUP=all
+QUICK_SETUP=yes
+SPECIES=all
+BUILD=yes
+OFFSPECIES=0
+TOP_ORDER=o
 ```
 #### Quick Setup for limited number of DBs
 ```
-GENOMES=../gb
-GTDB=none
-SOFTWARE=../bin
-OLDGNMSTXT=none
-DBS=dbs207
+GENOME_DIR=../gb
+SOFTWARE_DIR=../bin
+DB_DIR=../dbs/202o500
+GTDB_DIR=none
+DB_SIZE=500
+PREV_GNMS=none
 CORES=128
-QUICK_SETUP=Magnetobacterium__casensis,Quinella__sp905236255
-
+QUICK_SETUP=yes
+SPECIES=Magnetobacterium__casensis,Quinella__sp905236255
+BUILD=yes
+OFFSPECIES=0
+TOP_ORDER=o
 ```
 ## Notes
 ### RSYNC
@@ -133,4 +156,21 @@ rsync: failed to connect to ftp.ncbi.nlm.nih.gov (2607:f220:41f:250::230): Netwo
 rsync error: error in socket IO (code 10) at clientserver.c(125) [Receiver=3.1.2]
 ```
 ### Lost GCAs in Ful Update Mode
-When running full update mode from a previous version, there are cases where a GCA is present in the previous version, but no longer the newest update. The program will not add such cases to teh new gnms.txt, but will noted in notinnewrelease.txt. 
+When running full update mode from a previous version, there are cases where a GCA is present in the previous version, but no longer the newest update. The program will not add such cases to teh new gnms.txt, but will noted in notinnewrelease.txt.
+### Skipped Commands
+Please note that certain commands will be skipped with the corresponding file is present. There is a warning in the log file if the command is skipped the the command and the file looked for is detailed below:
+```
+toget: neededgnms.txt
+jobsrsync: always runs
+gencode: genetic_code_odd
+newgnms: notinnewrelease.txt
+links: always runs
+sketch: always runs
+gnmlists: the folder list
+mash: the folder msh
+treeparse: nodelists
+catorders: orders/orders.txt
+dbdesign: the corresponding smartsUniq file
+makedbs: always runs if BUILD is yes
+repdb: reps.msh
+```

@@ -12,7 +12,7 @@ my %gnms;
 
 #open RAW, ">RAWgnms.txt";
 open OUT, ">gnms.txt";
-open MISS, ">notinnewrelase.txt";
+open MISS, ">notinnewrelease.txt";
 $pm->run_on_finish( sub {
  my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data) = @_;
  $ident =~ s/none//;
@@ -30,8 +30,8 @@ for my $file (@files) {
  for (`cat $file`) {
   chomp;
   my @f = split "\t";
-  my ($olddir, $oldsp, $oldtax) = ('', '', 'na');
-  $olddir = $f[2] if $f[2]; $oldsp = $f[1] if $f[1]; $oldtax = $f[4] if $f[4];
+  my ($olddir, $oldsp, $oldgencode, $oldtax, $oldversion) = ('', '', '11', 'na', 'na');
+  $olddir = $f[2] if $f[2]; $oldsp = $f[1] if $f[1]; $oldgencode = $f[3] if $f[3]; $oldtax = $f[4] if $f[4]; $oldversion = $f[5] if $f[5];
   my $gca = $f[0];
   next if $gnms{$gca};
   my $pid = $pm->start($gca) and next;
@@ -44,11 +44,14 @@ for my $file (@files) {
    $sp = $f[1]; $sp =~ s/s__(\S+) (\S+)/${1}__$2/;
    $tax = $f[2];
   }
+  
   if ($sp) {
-   my $line = join ("\t", $gca, $sp, $dir, $version, $tax);
+   my $gencode = `grep -w "$sp" genetic_code_odd | cut -f 4`; $gencode = 11 unless $gencode;
+   chomp $gencode;
+   my $line = join ("\t", $gca, $sp, $dir, $gencode, $tax, $version);
    $pm->finish(0, {line => $line});
   } else {
-   my $line = join ("\t", $gca, $oldsp, $olddir, "na", $oldtax);
+   my $line = join ("\t", $gca, $oldsp, $olddir, $oldgencode, $oldtax, $oldversion);
    $pm->finish(1, {line => $line});
   }
  }

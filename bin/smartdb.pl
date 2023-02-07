@@ -1,21 +1,23 @@
 use strict; use warnings;
+
 my %config;
 ReadConfig();
-mkdir $config{GENOMES} unless -d $config{GENOMES};
-mkdir $config{DBS}     unless -d $config{DBS};
-my $softdir = $config{SOFTWARE};
+mkdir $config{GENOME_DIR} unless -d $config{GENOME_DIR};
+mkdir $config{DB_DIR}     unless -d $config{DB_DIR};
+my $softdir = $config{SOFTWARE_DIR};
 my $cores = $config{CORES};
+my $gtdb = $config{GTDB_DIR};
 
-my $logic = ($config{QUICK_SETUP} eq "none") ? 1 : 0;
+my $logic = ($config{QUICK_SETUP} eq "no") ? 1 : 0;
 
-if ($config{OLDGNMS} eq "none") {
+if ($config{PREV_GNMS} eq "none") {
  system("touch blank");
- $config{OLDGNMS} = "blank";
+ $config{PREV_GNMS} = "blank";
 }
 
-unless ($config{GTDB} eq "none") {
+unless ($gtdb eq "none") {
  for ('ar*metadata*', 'bac*metadata*', 'ar*.sp_labels.tree', 'bac*.sp_labels.tree', 'sp_clusters*.tsv') {
-  my @files = glob "$config{GTDB}/$_";
+  my @files = glob "$gtdb/$_";
   my $flag; for (@files) {$flag ++ unless /tar.gz$/}
   unless ($flag) {die "Missing GTDB file $_ required for FULL UPDATE; untar any GTDB .tar.gz files)\n"}
   for (@files) {unlink $_ if /tar.gz$/}
@@ -27,28 +29,24 @@ if ($logic) {
  FullUpdate();
 } else {
  print STDERR "QUICK SETUP MODE\n";
- die "Missing smartsUniq500 file!\n" unless (-e "smartsUniq500");
- if ($config{GTDB} eq "none") {
+ die "Missing smartsUniq$config{DB_SIZE} file!\n" unless (-e "smartsUniq$config{DB_SIZE}");
+ if ($gtdb eq "none") {
   die "Path to gtdb data must be included must be included when missing the gnms.txt file!\n" unless (-e "gnms.txt");
  }
  QuickSetUp();
 }
 
-system("rm blank") if (-e "blank");
-system("mkdir log; mv *log log/;");
+unlink "blank" if (-e "blank");
+mkdir "log"; system("mv *log log/;");
 system("mv newgnms.txt neededgnms.txt");
 
 sub FullUpdate {
- print STDERR "Running toget\n";
- unless (-e "neededgnms.txt") {
-  die if system("perl $softdir/toget.pl $config{OLDGNMS} $config{GTDB}");
- }
+ RunCommand("perl $softdir/toget.pl $config{PREV_GNMS} $gtdb", "neededgnms.txt");
  my $count = -1;
  my $prevcount = -2;
  unless (-e "rsynclog") { 
   while ($count != 0 and $count != $prevcount) {
-   print STDERR "Running jobsrsync\n";
-   die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores &> rsync.log");
+   RunCommand("perl $softdir/jobsrsync.pl $config{GENOME_DIR} $cores &> rsync.log", "");
    $prevcount = $count;
    $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
    print "$count\n";
@@ -60,8 +58,7 @@ sub FullUpdate {
    exit;
   }
  } else {
-  print STDERR "Running jobsrsync\n";
-  die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores &> rsync.log");
+  RunCommand("perl $softdir/jobsrsync.pl $config{GENOME_DIR} $cores &> rsync.log", "");
   $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
  }
  open OUT, ">newgnms.txt";
@@ -69,39 +66,28 @@ sub FullUpdate {
  for (`cat rsynclog`) { chomp; $missing{$_} = 1; system("rm -rf $config{GENOMES}/$1/$2/$3") if /(\d{3})(\d{3})(\d{3})/; }
  for (`cat neededgnms.txt`) { chomp; print OUT "$_\n" unless $missing{$_}; }
  close OUT;
- print STDERR "Running writemash\n";
- die if system("perl $softdir/writemash.pl $config{GENOMES} $cores");
- print STDERR "Running newgnms\n";
- die if system("perl $softdir/newgnms.pl $config{OLDGNMS} $config{GTDB} $config{GENOMES} $cores");
- print STDERR "Running finishgca\n";
- die if system("perl $softdir/finishgca.pl $config{GENOMES} $config{OLDGNMS} $cores");
- print STDERR "Running mashlists\n";
- die if system("perl $softdir/mashlists.pl $config{GTDB} $cores");
- print STDERR "Running mashpaste\n";
- die if system("perl $softdir/mashpaste.pl $config{GTDB} $softdir $cores &> mash.log");
- print STDERR "Running treeparse\n";
- die if system("perl $softdir/treeparse.pl $config{GTDB}");
- print STDERR "Running catorders\n";
- die if system("perl $softdir/catorders.pl $cores");
- print STDERR "Running smartdblist\n";
- die if system("perl $softdir/smartdblist.pl $config{GTDB} $cores &> dblist.log");
- #print STDERR "Running resmart\n";
- #die if system("perl $softdir/resmart.pl $cores");
- print STDERR "Running makedbs\n";
- die if system("perl $softdir/makedbs.pl $config{DBS} $config{GENOMES} $config{QUICK_SETUP} $cores &> makedbs.log");
- print STDERR "Running species\n";
- die if system("perl $softdir/species.pl $config{GENOMES} $config{GTDB} $config{QUICK_SETUP}");
+ RunCommand("perl $softdir/gencode.pl $gtdb/sp_clusters*.tsv", "genetic_code_odd");
+ RunCommand("perl $softdir/newgnms.pl $config{PREV_GNMS} $gtdb $config{GENOME_DIR} $cores", "notinnewrelease.txt");
+ RunCommand("perl $softdir/links.pl $config{GENOME_DIR} $config{PREV_GNMS} $cores", "");
+ RunCommand("perl $softdir/sketch.pl $config{GENOME_DIR} $cores", "");
+ RunCommand("perl $softdir/gnmlists.pl $gtdb $cores", "list");
+ RunCommand("perl $softdir/mash.pl $gtdb $softdir $cores &> mash.log", "msh");
+ RunCommand("perl $softdir/treeparse.pl $gtdb", "nodelists");
+ RunCommand("perl $softdir/catorders.pl $cores", "orders/orders.txt");
+ RunCommand("perl $softdir/dbdesign.pl $gtdb $config{DB_SIZE} $config{OFFSPECIES} $config{TOP_ORDER} $cores &> dblist.log", "smartsUniq$config{DB_SIZE}");
+ if ($config{BUILD} eq "yes") {
+  RunCommand("perl $softdir/makedbs.pl $config{DB_DIR} $config{GENOME_DIR} $config{SPECIES} $config{DB_SIZE} $cores &> makedbs.log". "");
+ }
+ RunCommand("perl $softdir/repdb.pl $config{GENOME_DIR} $gtdb $config{SPECIES}", "reps.msh");
 }
 
 sub QuickSetUp {
- print STDERR "Running smart2gnms\n";
- die if system("perl $softdir/smart2gnms.pl $config{GENOMES} $config{GTDB} $config{QUICK_SETUP} $cores");
+ RunCommand("perl $softdir/smartQuick.pl $config{GENOME_DIR} $gtdb $config{SPECIES} $config{DB_SIZE} $cores", "");
  my $count = -1;
  my $prevcount = -2;
  unless (-e "rsynclog") {
   while ($count != 0 and $count != $prevcount) {
-   print STDERR "Running jobsrsync\n";
-   die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores");
+   RunCommand("perl $softdir/jobsrsync.pl $config{GENOME_DIR} $cores", "");
    $prevcount = $count;
    $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
    print "$count\n";
@@ -113,8 +99,7 @@ sub QuickSetUp {
    exit;
   }
  } else {
-  print STDERR "Running jobsrsync\n";
-  die if system("perl $softdir/jobsrsync.pl $config{GENOMES} $cores");
+  RunCommand("perl $softdir/jobsrsync.pl $config{GENOME_DIR} $cores", "");
   $count = `wc -l rsynclog`; $count =~ s/ rsynclog//;
  }
  if ($count) {
@@ -124,10 +109,10 @@ sub QuickSetUp {
   for (`cat gnms.txt`) { chomp; my @f = split "\t"; print OUT "$_\n" unless $missing{$f[0]}; }
   system("mv tempgnms.txt gnms.txt");
  }
- print STDERR "Running makedbs\n";
- die if system("perl $softdir/makedbs.pl $config{DBS} $config{GENOMES} $config{QUICK_SETUP} $cores &> makedbs.log");
- print STDERR "Running species\n";
- die if system("perl $softdir/species.pl $config{GENOMES} $config{GTDB} $config{QUICK_SETUP}");
+ if ($config{BUILD} eq "yes") {
+  RunCommand("perl $softdir/makedbs.pl $config{DB_DIR} $config{GENOME_DIR} $config{SPECIES} $config{DB_SIZE} $cores &> makedbs.log", "");
+ }
+ RunCommand("perl $softdir/repdb.pl $config{GENOME_DIR} $gtdb $config{SPECIES}", "reps.msh");
 }
 
 sub ReadConfig {
@@ -136,6 +121,20 @@ sub ReadConfig {
   chomp; next unless /^([^=]+)=(\S+)/;
   $config{$1} = $2;
  }
- for (qw/GENOMES SOFTWARE DBS GTDB OLDGNMS CORES QUICK_SETUP/) {die "Config file missing $_\n" unless $config{$_}}
+ $config{DB_SIZE} = 500 unless $config{DB_DIR};
+ $config{PREV_GNMS} = "none" unless $config{PREV_GNMS};
+ $config{CORES} = 1 unless $config{CORES};
+ $config{QUICK_SETUP} = "no" unless $config{QUICK_SETUP};
+ $config{SPECIES} = "all" unless $config{SPECIES};
+ $config{BUILD} = "yes" unless $config{BUILD};
+ $config{OFFSPECIES} = 0 unless $config{OFFSPECIES};
+ $config{TOP_ORDER} = "o" unless $config{TOP_ORDER};
+ for (qw/GENOME_DIR SOFTWARE_DIR DB_DIR GTDB_DIR DB_SIZE PREV_GNMS CORES QUICK_SETUP SPECIES BUILD OFFSPECIES TOP_ORDER/) {die "Config file missing $_\n" unless defined $config{$_}}
 }
 
+sub RunCommand {
+ my ($cmd, $check) = @_;
+ if ($check) { if (-e $check) { warn "Skipping $cmd, $check exists\n"; return } }
+ warn "Running $cmd\n";
+ die "$cmd failed!\n" if system("$cmd");
+}
