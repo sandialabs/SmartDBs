@@ -1,7 +1,7 @@
 # SmartDBs
 
 ## About
-TIGER is a comparative genomics program for finding mobile genetic elements in a query genome. It requires a reference genome database appropriate for the query genome. The set of SMART DBs whose production is facilitated here are tailored for each species, yet redundant such that 3680 DBs cover all 65703 species of GTDB release 207. This pipeline has two modes, either a full update mode that freshly designs and prepares all DBs needed to cover all species in any new GTDB release, or a quick setup mode where the user chooses a subset of DBs to prepare from a precalculated DB design file. It collects required fasta files from NCBI and produces the chosen SMART DBs. These databases are smaller than those we used before, greatly speeding TIGER.
+TIGER is a comparative genomics program for finding mobile genetic elements in a query genome. It requires a reference genome database appropriate for the query genome. The set of SMART DBs whose production is facilitated here are tailored for each species, yet redundant such that 3029 DBs cover all 65703 species of GTDB release 207. This pipeline has two modes, either a full update mode that freshly designs and prepares all DBs needed to cover all species in any new GTDB release, or a quick setup mode where the user chooses a subset of DBs to prepare from a precalculated DB design file. It collects required fasta files from NCBI and produces the chosen SMART DBs. These databases are smaller than those we used before, greatly speeding TIGER.
 
 ## Citation
 Yu SL, Mageeney CM, Shormin F, Ghaffari N, Williams KP. 2023. Speeding genomic island discovery through systematic design of reference database composition, in preparation.
