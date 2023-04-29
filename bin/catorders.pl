@@ -1,6 +1,7 @@
 use strict; use warnings;
 use Parallel::ForkManager;
 
+die "perl $0 [# of cores]\n" unless @ARGV == 1;
 my $forks = shift;
 my $pm = Parallel::ForkManager->new($forks);
 

@@ -70,7 +70,7 @@ sub FullUpdate {
  RunCommand("perl $softdir/newgnms.pl $config{PREV_GNMS} $gtdb $config{GENOME_DIR} $cores", "notinnewrelease.txt");
  RunCommand("perl $softdir/links.pl $config{GENOME_DIR} $config{PREV_GNMS} $cores", "");
  RunCommand("perl $softdir/sketch.pl $config{GENOME_DIR} $cores", "");
- RunCommand("perl $softdir/gnmlists.pl $gtdb $cores", "list");
+ RunCommand("perl $softdir/gnmlists.pl $gtdb $cores", "lists");
  RunCommand("perl $softdir/mash.pl $gtdb $softdir $cores &> mash.log", "msh");
  RunCommand("perl $softdir/treeparse.pl $gtdb", "nodelists");
  RunCommand("perl $softdir/catorders.pl $cores", "orders/orders.txt");
@@ -121,6 +121,7 @@ sub ReadConfig {
   chomp; next unless /^([^=]+)=(\S+)/;
   $config{$1} = $2;
  }
+ $config{PREV_GNMS} = 'none' unless $config{PREV_GNMS};
  $config{DB_SIZE} = 500 unless $config{DB_DIR};
  $config{PREV_GNMS} = "none" unless $config{PREV_GNMS};
  $config{CORES} = 1 unless $config{CORES};

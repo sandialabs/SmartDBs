@@ -2,6 +2,7 @@ use strict; use warnings;
 use Parallel::ForkManager;
 use File::Spec;
 
+die "perl $0 database-repository gca-repository species-list [max size] [# of cores]\n" unless @ARGV == 5;
 my ($dbsdir, $repo, $dblist, $max, $fork) = @ARGV;
 warn "$dbsdir, $repo, $dblist, $fork\n";
 my $pm = Parallel::ForkManager->new($fork);

@@ -2,7 +2,8 @@ use strict; use warnings;
 use Parallel::ForkManager;
 use File::Spec;
 
-my ($repo, $gtdbfolder, $sps, $max, $forks) = @ARGV;
+die "perl $0 gca-repository new-gtdb-folder species-list [max size] softdir [# of cores]\n" unless @ARGV == 6;
+my ($repo, $gtdbfolder, $sps, $max, $softdir, $forks) = @ARGV;
 my $pm = Parallel::ForkManager->new($forks);
 my %gnms;
 my %use;
@@ -35,14 +36,14 @@ for (`cut -f 1,3 smartsUniq$max`) {
 }
 $pm->wait_all_children;
 close OUT; close GNMS;
-system("mv gnms.txt gnms.txtORG");
+system("mv gnms.txt original_gnms.txt");
 system("mv tempgnms.txt gnms.txt");
 
 sub GetLine {
  my $gca = shift;
  next unless $gca =~ /(\d{3})(\d{3})(\d{3})/;
  my $dir = File::Spec->rel2abs("$repo/$1/$2/$3");
- my ($sp, $tax, $version);
+ my ($sp, $gencode, $tax, $version);
  if (-e "gnms.txt") {
   for (`grep "$gca" gnms.txt | cut -f 2,4,5,6`) {
    chomp; ($sp, $gencode, $tax, $version) = split "\t";

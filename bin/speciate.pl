@@ -67,11 +67,12 @@ elsif (scalar keys %in > 1) {my @mix; for (keys %in) {push @mix, $in{$_}[1]} $ex
 else {$extra = 'ND:'; $call = $top if $top}
 my $gencode = 11;
 for (`grep -w $call $projdir/genetic_code_odd | cut -f 4`) {chomp; $gencode = $_}
+if ($extra =~ /^MIX:/) {$call = $extra} else {$call = $extra . $call}
 open OUT, ">species";
 print OUT join("\n", 
  "query genome = $genomeid",
  "species call = $call",
- "genetic code =  $gencode",
+ "genetic code = $gencode",
  "smartDB folder = $projdir", 
  "note = $extra",
  "Average Nucleotide Identity to species representative = $sim[0]",

@@ -1,6 +1,7 @@
 use strict; use warnings;
 use Parallel::ForkManager;
 
+die "perl $0 gca-repository new-gtdb-folder species-list\n" unless @ARGV == 3;
 my ($repo, $gtdbfolder, $sps) = @ARGV;
 open REF, ">reflist.txt";
 my $lists = '';

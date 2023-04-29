@@ -1,6 +1,8 @@
 use strict; use warnings;
 use Parallel::ForkManager;
 use File::Spec;
+
+die "perl $0 gca-repository old-gnms-file [# of cores]\n" unless @ARGV == 3;
 my ($repo, $gnmsfile, $forks) = @ARGV;
 my $old = $gnmsfile; $old =~ s/\/[^\/]+$//;
 my $pm = Parallel::ForkManager->new($forks);

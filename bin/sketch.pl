@@ -1,6 +1,7 @@
 use strict; use warnings;
 use Parallel::ForkManager;
 
+die "perl $0 gca-repository [# of cores]\n" unless @ARGV == 2;
 my ($repo, $forks) = @ARGV;
 
 my $pm = Parallel::ForkManager->new($forks);

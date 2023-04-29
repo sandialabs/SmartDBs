@@ -3,6 +3,8 @@ my ($gtdbfolder, $max, $offspecies, $toprank, $forks) = @ARGV;
 my (%nodedists, %seen, %singletops, %tops, %topnodes, $toget);  # Singletops: because trees don't name Order for single-species Orders
 my $limit = int($max * (1-$offspecies));
 my %comps;
+my $sub = 0;
+my $tot = 0;
 
 for (`cut -f 2,3 $gtdbfolder/sp_clusters*.tsv`) {
  next unless /^s__(\S+) (\S+).*(${toprank}__[^;\s]+)/; $tops{"${1}__$2"} = $3; $singletops{$3} ++
@@ -45,12 +47,20 @@ for my $comp (keys %comps) {
  push @sps, sort(@{$comps{$comp}{desigs}}) if $comps{$comp}{desigs};
  my $splist = join(',', @sps);
  my $line = join("\t", ($sps[0], $comp, $splist));
+ my $ct = split "\t", $comp;
+ $sub ++ if $ct < 5;
+ $tot ++;
  push @lines, $line;
 }
 
 for (sort @lines) {print OUT "$_\n"}
 
 close OUT;
+
+print STDOUT "Prepared $tot DBs, $sub of which contained very few (<5) genomes. " .
+ "Such low-count may perform poorly in finding genomic islands; " .
+ "please consult the second column of the file smartsUniq$max to find the low-count DBs.\n";
+
 sub Collect {
  my ($sp, @gnms) = @_;
  my $target = (sort{$a <=> $b} $limit, $toget)[0];

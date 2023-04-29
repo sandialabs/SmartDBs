@@ -11,6 +11,12 @@ Yu SL, Mageeney CM, Shormin F, Ghaffari N, Williams KP. 2023. Speeding genomic i
 git clone https://github.com/sandialabs/SmartDBs.git
 ```
 
+## Sample Call
+```
+perl smartdb.pl
+```
+Note: Program behavior is completely determined by config files explained below. Individual programs can be run, but it is not recommended, with the exception being the utility script speciate.pl.
+
 ## Dependencies
 
 ### Mash
