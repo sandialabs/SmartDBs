@@ -2,7 +2,6 @@ use strict; use warnings;
 use Parallel::ForkManager;
 use File::Spec;
 
-die "perl $0 gca-repository new-gtdb-folder species-list [max size] softdir [# of cores]\n" unless @ARGV == 6;
 my ($repo, $gtdbfolder, $sps, $max, $softdir, $forks) = @ARGV;
 my $pm = Parallel::ForkManager->new($forks);
 my %gnms;

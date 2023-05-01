@@ -82,7 +82,7 @@ sub FullUpdate {
 }
 
 sub QuickSetUp {
- RunCommand("perl $softdir/smartQuick.pl $config{GENOME_DIR} $gtdb $config{SPECIES} $config{DB_SIZE} $cores", "");
+ RunCommand("perl $softdir/smartQuick.pl $config{GENOME_DIR} $gtdb $config{SPECIES} $config{DB_SIZE} $softdir $cores", "");
  my $count = -1;
  my $prevcount = -2;
  unless (-e "rsynclog") {
